@@ -22,8 +22,8 @@ coverage/
 test-output/
 *.local
 
-# Bundled/downloaded binaries (not committed)
-vendor/ffmpeg/
+# Bundled/downloaded binaries and dev tools (not committed)
+vendor/
 tools/rea/
 
 # OS / editor

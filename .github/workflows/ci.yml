@@ -19,13 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Use the pnpm version from package.json's "packageManager" field (pnpm 12).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24 # node:sqlite is available without a flag on Node 24
           cache: pnpm
 
       # FFmpeg is required for the media/export/MCP e2e tests to run (they auto-skip
@@ -65,9 +64,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 9 }
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm }
+        with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm build && pnpm bundle
       - name: Start daemon and hit /health
