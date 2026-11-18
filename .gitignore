@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Rust / Tauri
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# Local app data, caches, test artifacts
+.reelforge/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+tmp/
+coverage/
+test-output/
+*.local
+
+# Bundled/downloaded binaries (not committed)
+vendor/ffmpeg/
+tools/rea/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

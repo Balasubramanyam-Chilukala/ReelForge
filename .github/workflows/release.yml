@@ -1,0 +1,83 @@
+name: Release
+
+# Builds signed/unsigned desktop installers on native runners:
+#   * Windows  -> NSIS .exe installer
+#   * macOS    -> .app bundle + .dmg (universal: aarch64 + x86_64)
+# Windows builds run on windows runners; macOS builds run on macOS runners.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: ""
+            args: ""
+          - os: macos-latest
+            target: "universal-apple-darwin"
+            args: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - run: pnpm install --frozen-lockfile
+
+      # Build TS packages + the self-contained daemon/MCP bundles that Tauri ships as
+      # resources, then let tauri-action build the frontend (beforeBuildCommand) and bundle.
+      - name: Build packages and bundles
+        run: pnpm build && pnpm bundle
+
+      - name: Generate app icons (placeholder source if none committed)
+        shell: bash
+        run: |
+          if [ ! -f apps/desktop/src-tauri/icons/icon.png ]; then
+            echo "No icon source committed; generating a solid placeholder."
+            mkdir -p apps/desktop/src-tauri/icons
+            node -e "const fs=require('fs');const b=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');fs.writeFileSync('apps/desktop/src-tauri/icons/icon.png',b)" || true
+          fi
+
+      - name: Build desktop app (Tauri)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Optional signing/notarization. Jobs run unsigned if these are unset. ---
+          # macOS signing + notarization:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows (optional) code signing is configured via tauri.conf or your own step.
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: "ReelForge ${{ github.ref_name }}"
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

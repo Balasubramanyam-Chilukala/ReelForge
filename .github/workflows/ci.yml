@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # FFmpeg is required for the media/export/MCP e2e tests to run (they auto-skip
+      # without it, but CI must actually exercise them).
+      - name: Install FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y
+
+      - name: Install FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm -r exec tsc --noEmit
+
+      - name: Test (with FFmpeg)
+        run: pnpm test
+
+      - name: Bundle daemon + MCP (self-contained)
+        run: pnpm bundle
+
+      - name: Build desktop frontend
+        run: pnpm --filter @reelforge/desktop build
+
+  smoke-bundle:
+    name: Bundled daemon smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build && pnpm bundle
+      - name: Start daemon and hit /health
+        shell: bash
+        run: |
+          node packages/backend/dist/reelforge-backend.bundle.cjs --port=51975 &
+          PID=$!
+          sleep 3
+          curl -sf http://127.0.0.1:51975/health
+          kill $PID

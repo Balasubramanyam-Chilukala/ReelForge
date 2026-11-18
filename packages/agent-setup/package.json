@@ -1,0 +1,18 @@
+{
+  "name": "@reelforge/agent-setup",
+  "version": "0.1.0",
+  "description": "Detect and configure Claude Code and OpenCode to use the reelforge-mcp server. Preserves existing config, backs up, validates.",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": { "reelforge-connect": "./dist/bin/reelforge-connect.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "license": "MIT"
+}

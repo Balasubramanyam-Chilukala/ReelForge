@@ -1,0 +1,7 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+allowBuilds:
+  esbuild: true
+overrides:
+  zod-to-json-schema: 3.24.1

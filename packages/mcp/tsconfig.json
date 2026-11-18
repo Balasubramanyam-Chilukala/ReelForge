@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "references": [{ "path": "../engine" }, { "path": "../shared" }],
+  "include": ["src"],
+  "exclude": ["dist", "test", "**/*.test.ts"]
+}

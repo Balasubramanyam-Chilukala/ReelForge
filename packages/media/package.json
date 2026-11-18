@@ -1,0 +1,23 @@
+{
+  "name": "@reelforge/media",
+  "version": "0.1.0",
+  "description": "FFmpeg/FFprobe integration: detection, probe, thumbnails, waveforms, scenes, and the timeline->filtergraph export compiler.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@reelforge/engine": "workspace:*"
+  },
+  "license": "MIT"
+}
